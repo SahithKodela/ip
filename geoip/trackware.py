@@ -7,14 +7,11 @@ def get_ip(request):
       return xff.split(',')[0]
    return request.META.get('REMOTE_ADDR')
 
-class UserLocationLoggerMiddleware(object):
+class UserLocationLoggerMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.get_response(request)
-
-    def process_request(self, request):
         if request.user:
             # Only log requests for superusers,
             # you can control this by adding a setting
@@ -24,8 +21,12 @@ class UserLocationLoggerMiddleware(object):
                 ip = x_forwarded_for.split(',')[0]
             else:
                 ip = request.META.get('REMOTE_ADDR')
-            g = GeoIP2()
-            print(ip)
-            lat,long = g.lat_lon(ip)
-            Log.objects.create(request.user, ip, lat, long)
+            try:
+                g = GeoIP2()
+                lat,long = g.lat_lon(ip)
+                Log.objects.create(request.user, ip, lat, long)
+            except:
+                pass
+        return self.get_response(request)
+
 
